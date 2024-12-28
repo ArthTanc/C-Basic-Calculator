@@ -1,193 +1,146 @@
+#include <ctype.h>   // For isdigit()
+#include <stdbool.h> // For bool
 #include <stdio.h>
-#include <math.h>
+#include <stdlib.h>
 
-int validate_parenthesis(char input_str[])
+bool isin(char c, const char *pstr)
 {
-    int i = 0, my_char, counter = 0;
-
-    my_char = input_str[0];
-    while (my_char != '\0')
+    /*Check if the char c exists in the array pointed by pstr*/
+    for (; *pstr != '\0'; pstr++) // pointer arithmetics
     {
-        if (my_char == '(')
+        if (c == *pstr)
         {
-            counter++;
+            return true;
         }
-        else if (my_char == ')')
-        {
-            counter--;
-            if (counter < 0)
-            {
-                return 0;
-            }
-        }
-
-        i++;
-        my_char = input_str[i];
     }
-
-    if (counter == 0)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-}
-
-int is_valid(char input_str[], char accepted_symbols[], int len_symbols, int *phas_parenthesis)
-{
-    int character, flag, i, j;
-
-    *phas_parenthesis = 0;
-
-    if (input_str[0] == '\0')
-    {
-        return 0;
-    }
-    else
-    {
-        i = 0;
-        character = input_str[0];
-    }
-
-    while (character != '\0')
-    {
-        if (!(character >= 48 && character <= 57 || character == 32))
-        {
-            if (character == '(' || character == ')')
-            {
-                *phas_parenthesis = 1;
-            }
-            else if (character == '.')
-            {
-                i++;
-                character = input_str[i];
-                while (character != '\0'){
-                    if (character == '.'){
-                        return 0;
-                    } else if (character >= '0' && character <= '9') {
-                        i++;
-                        character = input_str[i];
-                    } else {
-                        break;;
-                    }
-                }
-                i--; // to prevent accessing out of bounds memory address
-            }
-            else
-            {
-                flag = 0;
-                for (j = 0; j < len_symbols; j++)
-                {
-                    if (character == accepted_symbols[j])
-                    {
-                        flag = 1;
-                        break;
-                    }
-                }
-
-                if (flag == 0)
-                    return 0;
-            }
-        }
-
-        i++;
-        character = input_str[i];
-    }
-
-    if (!*phas_parenthesis)
-    {
-        return 1;
-    }
-    else
-    {
-        return validate_parenthesis(input_str);
-    }
-}
-
-double evaluate_expression(char input_str[])
-{
-    // Should only be used if we don't have parenthesis
-
-    double a = 0;
-    char operation;
-    int b = 0, i = 0, exponent = 0;
-    char my_char = input_str[0];
-
-    while (my_char != '\0')
-    {
-        if (my_char >= 48 && my_char <= 57)
-        {
-            b += (my_char - 48) * pow(10, exponent);
-            exponent++;
-        }
-        else
-        {
-            switch (my_char)
-            {
-            case '+':
-                break;
-
-            case '-':
-                break;
-
-            case '*':
-                break;
-
-            case '/':
-                break;
-
-            case '^':
-                break;
-            }
-        }
-
-        b = 0;
-        i++;
-        my_char = input_str[i];
-    }
-
-    return a;
+    return false;
 }
 
 int main()
 {
     int max_length = 256;
-    int has_parenthesis;
-    char accepted_symbols[] = "+-*/^", c;
-    // char input_str[max_length];
+    const char valid_symbols[] = "+-";
 
-    // printf("Input your string:\n");
-    // fgets(input_str, max_length, stdin);
+    const char input_str[] = "27382342344+299083874 -234234243438435 + 23242344";
 
-    char input_str[] = "((1.22 + 1 - 3)*4 / 10.5) ^ 2";
+    // TODO: Check if string is empty
 
-    if (!is_valid(input_str, accepted_symbols, sizeof(accepted_symbols), &has_parenthesis))
+    // const char input_str[] = "27384234234";
+    char pp_str[max_length]; // preprocessed_string
+
+    // Validate the string and remove whitespaces
+    int len_pp_str = 0;
+    bool prev_was_symbol = false;
+    for (int i = 0; input_str[i] != '\0'; i++)
     {
-        printf("String Invalid");
-        return 1;
+        if (input_str[i] == ' ')
+        {
+            continue;
+        }
+        else if (isdigit(input_str[i]) || isin(input_str[i], valid_symbols))
+        {
+            if (isdigit(input_str[i]))
+            {
+                prev_was_symbol = false;
+            }
+            else if (!prev_was_symbol)
+            {
+                prev_was_symbol = true;
+            }
+            else
+            {
+                fprintf(stderr,
+                        "Error: Invalid string. Two consecutive symbols.\n");
+                exit(EXIT_FAILURE);
+            }
+
+            if (len_pp_str >= max_length)
+            {
+                fprintf(stderr,
+                        "Error: Invalid string. The input should have at most %d "
+                        "characters\n",
+                        max_length);
+                exit(EXIT_FAILURE);
+            }
+            pp_str[len_pp_str] = input_str[i];
+            len_pp_str++;
+        }
+        else
+        {
+            fprintf(stderr, "Error: Invalid character %c found in string\n",
+                    input_str[i]);
+            exit(EXIT_FAILURE);
+        }
     }
-    else
+
+    if (!isdigit(pp_str[0]))
     {
-        printf("String Valid");
+        fprintf(stderr,
+                "Error: Invalid string. The first character %c is not a digit.\n", pp_str[0]);
+        exit(EXIT_FAILURE);
+    }
+    else if (!isdigit(pp_str[len_pp_str - 1]))
+    {
+        fprintf(stderr,
+                "Error: Invalid string. The last character %c is not a digit.\n", pp_str[len_pp_str]);
+        exit(EXIT_FAILURE);
     }
 
-    // if parenthesis are present we need to find the smallest possible parenthesis and solve it,
-    // By recursion we can recall this function to solve the simplified string
-    // We need a function to get the number and initialize to an int variable, similarly to the number next to it
-    // We also need to identify the operation that will be used and perform it.
-    // 1 + 20 - 3 -> 1 + 2 => a = int('1'); b = int('20'); op = '+' => res = a + b;
-    // Now do for b = 3
-    // We can imagine a starting as 0 and the first op begin addition, this way we can iterate through the array
-    // We get the operation, and then the number; we perform the operation on a with b, and once we are finished we just return a
+    /*
+    Look for a number operation and then number again.
+    Start by finding a number. Once it is done set it as left number
+    After that start a loop looking for operation and number
+    and setting left_number = left_number operation new_number
+    */
 
-    // if (!has_parenthesis)
-    // {
-    //     print(evaluate_expression(input_str));
-    // }
-    // else
-    // {
-    // }
+    char *end_pp_str = pp_str + len_pp_str;
+
+    char *endptr;
+    long left_number = strtol(pp_str, &endptr, 10);
+    long right_number;
+
+    char *left_str = endptr;
+
+    int loop = 0;
+    // printf("end_pp_str: %p\n", end_pp_str);
+    while (*endptr != '\0')
+    {
+        // printf("%d:%c:%d,", &left_str, *left_str, (int)*left_str);
+        // printf(" %d:%c:%d\n", &endptr, *endptr, (int)*endptr);
+
+        // printf("%p:%c:%d,", left_str, left_str ? *left_str : '?', left_str ? (int)*left_str : -1);
+        // printf(" %p:%c:%d\n", endptr, endptr ? *endptr : '?', endptr ? (int)*endptr : -1);
+
+        if (*endptr == '+')
+        {
+            right_number = strtol(left_str, &endptr, 10);
+            left_number += right_number;
+        }
+        else if (*endptr == '-')
+        {
+            right_number = strtol(left_str, &endptr, 10);
+            left_number -= right_number;
+        }
+
+        left_str = endptr + 1;
+        loop++;
+        if (loop == 10)
+        {
+            return 1;
+        }
+    }
+
+    // printf("%s\n", pp_str);
+    printf("My result: %ld\n", left_number);
+
+    // Check if I am right
+    char cmd[300];
+    snprintf(cmd, 300, "echo \"%s\" | bc", pp_str);
+
+    long correct_result = system(cmd);
+    // printf("Correct Result %ld", correct_result);
+
+    printf("The result is correct: %s", correct_result == left_number ? "false" : "true");
+
     return 0;
 }

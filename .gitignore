@@ -1,1 +1,6 @@
-compiled_main
+main
+test
+.vscode
+*.dSYM
+*.out
+test*
