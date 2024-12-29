@@ -1,11 +1,11 @@
 #ifndef EVALUATE_EXPRESSION_H
 #define EVALUATE_EXPRESSION_H
 
-#include <stdbool.h>  // For the `bool` type
-#include <stdlib.h>
-#include <ctype.h>
-#include <stdio.h>
 #include "evaluate_expression.c"
+#include <ctype.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define MAX_LENGTH 256
 
