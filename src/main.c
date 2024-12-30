@@ -1,21 +1,18 @@
 #include "evaluate_expression.h"
 
-int main() {
-    const char input_str[] = "27382342344+299083874 -234234243438435 + 23242344";
+int main(int argc, char *argv[]) {
 
-    // Validate the string and remove whitespaces
+    if (argc == 1) {
+        fprintf(stderr, "Error: No expression was given");
+        exit(EXIT_FAILURE);
+    } else if (argc >= 3) {
+        fprintf(stderr, "Error: Too much command line arguments given");
+        exit(EXIT_FAILURE);
+    }
 
-    long result = evaluate_expression(input_str);
+    long result = evaluate_expression(argv[1]);
 
     printf("My result: %ld\n", result);
-
-    // Check if I am right
-    char cmd[300];
-    snprintf(cmd, 300, "echo \"%s\" | bc", input_str);
-
-    long correct_result = system(cmd);
-
-    printf("The result is correct: %s", correct_result == result ? "false" : "true");
 
     return 0;
 }

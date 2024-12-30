@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #define MAX_LENGTH 256
@@ -52,8 +53,9 @@ void get_preprocessed_str(const char *input_str, char *pp_str, int *len_pp_str) 
             exit(EXIT_FAILURE);
         }
     }
+    pp_str[*len_pp_str] = '\0';
 
-    if (!isdigit(pp_str[0])) {
+    if (!(isdigit(pp_str[0]) || pp_str[0] == '-' || pp_str[0] == '+')) {
         fprintf(stderr, "Error: Invalid string. The first character %c is not a digit.\n",
                 pp_str[0]);
         exit(EXIT_FAILURE);
@@ -80,24 +82,19 @@ long evaluate_expression(const char *input_str) {
     int loop = 0;
     // printf("end_pp_str: %p\n", end_pp_str);
     while (*endptr != '\0') {
-        // printf("%d:%c:%d,", &left_str, *left_str, (int)*left_str);
-        // printf(" %d:%c:%d\n", &endptr, *endptr, (int)*endptr);
+        // printf("%p:%c:%d,", left_str, left_str ? *left_str : '?', left_str ? (int)*left_str :
+        // -1); printf(" %p:%c:%d\n", endptr, endptr ? *endptr : '?', endptr ? (int)*endptr : -1);
 
-        // printf("%p:%c:%d,", left_str, left_str ? *left_str : '?', left_str ?
-        // (int)*left_str : -1); printf(" %p:%c:%d\n", endptr, endptr ? *endptr :
-        // '?', endptr ? (int)*endptr : -1);
-
-        if (*endptr == '+') {
+        if (*endptr == '+' || *endptr == '-') {
+            // strtol will translate "-3" to negative 3
             right_number = strtol(left_str, &endptr, 10);
             left_number += right_number;
-        } else if (*endptr == '-') {
-            right_number = strtol(left_str, &endptr, 10);
-            left_number -= right_number;
         }
 
-        left_str = endptr + 1;
+        left_str = endptr;
         loop++;
-        if (loop == 10) {
+        if (loop == 30) {
+            printf("Too many loops\n");
             return 1;
         }
     }
