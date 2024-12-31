@@ -1,7 +1,6 @@
 #include "evaluate_expression.h"
 
 int main(int argc, char *argv[]) {
-
     if (argc == 1) {
         fprintf(stderr, "Error: No expression was given");
         exit(EXIT_FAILURE);
