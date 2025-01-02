@@ -1,6 +1,6 @@
 #include "evaluate_expression.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     if (argc == 1) {
         fprintf(stderr, "Error: No expression was given");
         exit(EXIT_FAILURE);
@@ -9,9 +9,9 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    long result = evaluate_expression(argv[1]);
+    double result = evaluate_expression(argv[1]);
 
-    printf("My result: %ld\n", result);
+    printf("My result: %f\n", result);
 
     return 0;
 }
