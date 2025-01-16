@@ -56,13 +56,12 @@ void get_preprocessed_str(const char* input_str, char* pp_str) {
                         "be a digit, + or -\n");
                 exit(EXIT_FAILURE);
             }
-            pp_str[len_pp_str] = input_str[i];
-            len_pp_str++;
             first_char = false;
+        } else if (isdigit(input_str[i])) {
+            prev_was_symbol = false;
+            
         } else if (isdigit(input_str[i]) || isin(input_str[i], VALID_OPERATIONS)) {
-            if (isdigit(input_str[i])) {
-                prev_was_symbol = false;
-            } else if (!prev_was_symbol) {
+            if (!prev_was_symbol) {
                 prev_was_symbol = true;
             } else if (((input_str[i - 1] == '-') && (input_str[i] == '(')) ||
                        ((input_str[i - 1] == '(') && ((input_str[i] == '+') || (input_str[i] == '-')))) {
@@ -79,8 +78,6 @@ void get_preprocessed_str(const char* input_str, char* pp_str) {
                         MAX_LENGTH);
                 exit(EXIT_FAILURE);
             }
-            pp_str[len_pp_str] = input_str[i];
-            len_pp_str++;
         } else if (isin(input_str[i], "()")) {
             switch (input_str[i]) {
                 case '(':
@@ -94,12 +91,12 @@ void get_preprocessed_str(const char* input_str, char* pp_str) {
                     }
                     break;
             }
-            pp_str[len_pp_str] = input_str[i];
-            len_pp_str++;
         } else {
             fprintf(stderr, "Error: Invalid character %c found in string\n", input_str[i]);
             exit(EXIT_FAILURE);
         }
+        pp_str[len_pp_str] = input_str[i];
+        len_pp_str++;
     }
     pp_str[len_pp_str] = '\0';
 
