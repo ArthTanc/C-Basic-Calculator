@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +9,7 @@
 #define MAX_COMPONENT_LENGTH 11
 #define MAX_LENGTH 256
 
-const char VALID_OPERATIONS[] = "+-*/";
+const char VALID_OPERATIONS[] = "+-*/^";
 
 struct Node {
     char operation;
@@ -63,8 +64,11 @@ void get_preprocessed_str(const char* input_str, char* pp_str) {
                 prev_was_symbol = false;
             } else if (!prev_was_symbol) {
                 prev_was_symbol = true;
+            } else if (((input_str[i - 1] == '-') && (input_str[i] == '(')) ||
+                       ((input_str[i - 1] == '(') && ((input_str[i] == '+') || (input_str[i] == '-')))) {
+                // accept -( and (- or (+ but not others
             } else {
-                fprintf(stderr, "Error: Invalid string. Two consecutive operations.\n");
+                fprintf(stderr, "Error: Invalid string. Two consecutive operations, use parenthesis if necessary.\n");
                 exit(EXIT_FAILURE);
             }
 
@@ -110,6 +114,18 @@ void get_preprocessed_str(const char* input_str, char* pp_str) {
         exit(EXIT_FAILURE);
     }
 }
+
+// void print_linked_list(struct Node* pnode) {
+//     printf("%c%f", pnode->operation, pnode->numeric);
+//     pnode = pnode->next;
+//     while (pnode != NULL) {
+//         printf(" -> %c%f", pnode->operation, pnode->numeric);
+//         pnode = pnode->next;
+//     }
+//     printf("\n");
+
+//     return;
+// }
 
 double evaluate_expression(const char* input_str) {
     char pp_str[MAX_LENGTH + 1];  // one extra in case I need to add a + in the beginning
@@ -172,13 +188,6 @@ double evaluate_expression(const char* input_str) {
             k = 0;
 
             pnode->numeric = strtol(component_str, NULL, 10);
-            if (pnode->operation == '-') {
-                pnode->operation = '+';
-                pnode->numeric *= -1;
-            }
-
-            // printf("%s; operation: %c; numeric: %f\n", component_str,
-            // pnode->operation, pnode->numeric);
 
             // Dynamically allocate memory for the new node
             pnode->next = malloc(sizeof(struct Node));
@@ -212,10 +221,6 @@ double evaluate_expression(const char* input_str) {
             }
 
             pnode->numeric = evaluate_expression(parenthesis_exp);
-            if (pnode->operation == '-') {
-                pnode->operation = '+';
-                pnode->numeric *= -1;
-            }
 
             // Dynamically allocate memory for the new node
             pnode->next = malloc(sizeof(struct Node));
@@ -224,7 +229,7 @@ double evaluate_expression(const char* input_str) {
         }
     }
 
-    pnode->next = NULL;  // To counter act the last next node creation
+    pnode = NULL;  // To counter act the last next node creation
 
     // printf("head: %p; op: %c; numeric: %f\n", pnode, pnode->operation,
     // pnode->numeric);
@@ -232,20 +237,32 @@ double evaluate_expression(const char* input_str) {
     // [+2] -> [-3] -> [*4] -> [+5] -> [/2] -> [/3]
     // [+2] -> [-3] -> [*4] -> [+5] -> [/2] -> [/3]
     // pnode = [+2]; pnode->next = [-3] => pnode->next->next = [*4]
+    if (head->operation == '-') {
+        head->operation = '+';
+        head->numeric *= -1;
+    }
 
     while (head->next != NULL) {
-        if ((head->next->next == NULL) || isin(head->next->operation, "*/") ||
-            !isin(head->next->next->operation, "*/")) {
+        // print_linked_list(head);
+
+        if ((head->next->next == NULL) || isin(head->next->operation, "*/^") ||
+            !isin(head->next->next->operation, "*/^")) {
             // combine first and second
             switch (head->next->operation) {
                 case '+':
                     head->numeric += head->next->numeric;
+                    break;
+                case '-':
+                    head->numeric -= head->next->numeric;
                     break;
                 case '*':
                     head->numeric *= head->next->numeric;
                     break;
                 case '/':
                     head->numeric /= head->next->numeric;
+                    break;
+                case '^':
+                    head->numeric = pow(head->numeric, head->next->numeric);
                     break;
             }
             head->next = head->next->next;
@@ -259,6 +276,9 @@ double evaluate_expression(const char* input_str) {
                 case '/':
                     head->next->numeric /= head->next->next->numeric;
                     break;
+                case '^':
+                    head->next->numeric = pow(head->next->numeric, head->next->next->numeric);
+                    break;
             }
 
             head->next->next = head->next->next->next;
@@ -267,11 +287,3 @@ double evaluate_expression(const char* input_str) {
 
     return head->numeric;
 }
-
-// int main() {
-//     char pp_str[MAX_LENGTH + 1];
-//     // double d = evaluate_expression(" -(3*82/3)*(5-36)");
-//     // printf("%f\n", d);
-//     printf("%f\n", evaluate_expression("(3*82/3)*(5-36)"));
-//     return 0;
-// }
