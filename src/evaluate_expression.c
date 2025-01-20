@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// 11 is 1 sign + 10 digits for an integer value
+// 11 is 1 sign + 10 digits for a number value
 #define MAX_COMPONENT_LENGTH 11
 #define MAX_LENGTH 256
 
@@ -38,6 +38,7 @@ void get_preprocessed_str(const char* input_str, char* pp_str) {
     int parenthesis_stack = 0;
     bool prev_was_symbol = false;
     bool first_char = true;
+    bool has_point = false;
     for (int i = 0; input_str[i] != '\0'; i++) {
         if (input_str[i] == ' ') {
             continue;
@@ -59,8 +60,13 @@ void get_preprocessed_str(const char* input_str, char* pp_str) {
             first_char = false;
         } else if (isdigit(input_str[i])) {
             prev_was_symbol = false;
-            
-        } else if (isdigit(input_str[i]) || isin(input_str[i], VALID_OPERATIONS)) {
+        } else if (input_str[i] == '.') {
+            if (has_point) {
+                fprintf(stderr, "Error: Invalid string. More than one point found in number");
+                exit(EXIT_FAILURE);
+            }
+            has_point = true;
+        } else if (isin(input_str[i], VALID_OPERATIONS)) {
             if (!prev_was_symbol) {
                 prev_was_symbol = true;
             } else if (((input_str[i - 1] == '-') && (input_str[i] == '(')) ||
@@ -78,6 +84,8 @@ void get_preprocessed_str(const char* input_str, char* pp_str) {
                         MAX_LENGTH);
                 exit(EXIT_FAILURE);
             }
+
+            has_point = false;
         } else if (isin(input_str[i], "()")) {
             switch (input_str[i]) {
                 case '(':
@@ -112,23 +120,7 @@ void get_preprocessed_str(const char* input_str, char* pp_str) {
     }
 }
 
-// void print_linked_list(struct Node* pnode) {
-//     printf("%c%f", pnode->operation, pnode->numeric);
-//     pnode = pnode->next;
-//     while (pnode != NULL) {
-//         printf(" -> %c%f", pnode->operation, pnode->numeric);
-//         pnode = pnode->next;
-//     }
-//     printf("\n");
-
-//     return;
-// }
-
 double evaluate_expression(const char* input_str) {
-    char pp_str[MAX_LENGTH + 1];  // one extra in case I need to add a + in the beginning
-    get_preprocessed_str(input_str, pp_str);
-    // printf("pp_str: %s\n", pp_str);
-
     /*
         Separate the expression into a list of strings
         "2+4+5-4*3/6"
@@ -139,30 +131,13 @@ double evaluate_expression(const char* input_str) {
         2. The items should be scanned based on priority
         3. If the item next to the right component is not of priority,
         both components can be merged
-
-        Extra:
-          - Parenthesis expressions can be treated as an entire component,
-          and before it is merged with another component it should be solved
-          - For parenthesis use recursion, call itself for the parenthesis and
-          append to the list the result of the parenthesis expression
     */
 
-    // Simple version with only addition and subtraction
+    char pp_str[MAX_LENGTH + 1];  // one extra in case I need to add a + in the beginning
+    get_preprocessed_str(input_str, pp_str);
+
     bool prev_is_digit = true;
 
-    int current_len = 1;
-    for (int i = 1; pp_str[i] != '\0'; i++) {
-        current_len++;
-        if (!isdigit(pp_str[i])) {
-            current_len = 1;
-        }
-        if (current_len > MAX_COMPONENT_LENGTH) {
-            fprintf(stderr, "Error: Single component exceeds max length of %d.\n", MAX_COMPONENT_LENGTH);
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    // MAX_COMPONENT_LENGTH + 1 to take into account the null char
     struct Node* head = malloc(sizeof(struct Node));
     head->next = NULL;
 
@@ -177,14 +152,14 @@ double evaluate_expression(const char* input_str) {
             pnode->operation = pp_str[i];
             i++;
         } else if (isdigit(pp_str[i])) {
-            while (isdigit(pp_str[i])) {
+            while (isdigit(pp_str[i]) | (pp_str[i] == '.')) {
                 component_str[k] = pp_str[i];
                 k++;
                 i++;
             }
             k = 0;
 
-            pnode->numeric = strtol(component_str, NULL, 10);
+            pnode->numeric = strtod(component_str, NULL);
 
             // Dynamically allocate memory for the new node
             pnode->next = malloc(sizeof(struct Node));
@@ -228,20 +203,12 @@ double evaluate_expression(const char* input_str) {
 
     pnode = NULL;  // To counter act the last next node creation
 
-    // printf("head: %p; op: %c; numeric: %f\n", pnode, pnode->operation,
-    // pnode->numeric);
-
-    // [+2] -> [-3] -> [*4] -> [+5] -> [/2] -> [/3]
-    // [+2] -> [-3] -> [*4] -> [+5] -> [/2] -> [/3]
-    // pnode = [+2]; pnode->next = [-3] => pnode->next->next = [*4]
     if (head->operation == '-') {
         head->operation = '+';
         head->numeric *= -1;
     }
 
     while (head->next != NULL) {
-        // print_linked_list(head);
-
         if ((head->next->next == NULL) || isin(head->next->operation, "*/^") ||
             !isin(head->next->next->operation, "*/^")) {
             // combine first and second
@@ -264,8 +231,6 @@ double evaluate_expression(const char* input_str) {
             }
             head->next = head->next->next;
         } else {
-            // Combine second and third
-
             switch (head->next->next->operation) {
                 case '*':
                     head->next->numeric *= head->next->next->numeric;
